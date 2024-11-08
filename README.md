@@ -1,6 +1,6 @@
 Directory Structure:
 
-.
+`.
 |___ README.md
 
 |___project_info
@@ -19,7 +19,7 @@ Directory Structure:
 |___PRJEB3232
 |   |___PRJEB3232_SraRunTable.txt
 |   |___SRR_Acc_List.txt
-|   |___fastq
+|   |
 |       |___**all fastq files
 |
 |___PRJEB3250
@@ -32,13 +32,14 @@ Directory Structure:
 |   |___PRJNA878661_SraRunTable.txt
 |   |___SRR_Acc_List.txt
 |   |___fastq
-|       |___**all fastq files
+|       |___`**all fastq files`
 |
 |___PRJNA834026
 |   |___PRJNA834026_SraRunTable.txt
 |   |___SRR_Acc_List.txt
 |   |___fastq
-|       |___**all fastq files
+|       |___`**all fastq files`
+`
 
 
 All initial processing (fastq download and qiime taxonomic assignment) was done locally. Afterwards, files are processed on the cluster
