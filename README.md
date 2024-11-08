@@ -1,12 +1,7 @@
 Directory Structure:
 
 ```
-action: function(ctx) {
-    workflow.check(!ctx.issue.isChanged('votes'), workflow.i18n('Voting for a resolved issue is not allowed.'));
-},
-```
-
-`.
+.
 |___ README.md
 
 |___project_info
@@ -44,8 +39,8 @@ action: function(ctx) {
 |   |___PRJNA834026_SraRunTable.txt
 |   |___SRR_Acc_List.txt
 |   |___fastq
-|       |___`**all fastq files``
-
+|       |___`**all fastq files`
+```
 
 All initial processing (fastq download and qiime taxonomic assignment) was done locally. Afterwards, files are processed on the cluster
 
