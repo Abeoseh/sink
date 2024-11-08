@@ -1,7 +1,6 @@
 Directory Structure:
 
 .
-
 |___ README.md
 
 |___project_info
