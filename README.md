@@ -51,8 +51,8 @@ Directory Structure:
 ```
 
 All initial processing (fastq download and qiime taxonomic assignment) was done locally. Afterwards, files are processed on the cluster
+**download_sra.sh**
 ```
-**`download_sra.sh` 
 `download_sra.sh` takes a SRR_Acc_List.txt and downloads all the fastq files for the given accessions. It automatically
 loop over the project IDs provided in as an array called "projects" within `download_sra.sh`.
 
@@ -64,8 +64,8 @@ How to run:
 - Output: a file in the scripts folder called sra.log which contains std error and std Output.
 ```
 
+**qiime2_single.slurm**
 ```
-qiime2_single.slurm
 single means only forward or reverse
 
 How to run:
@@ -75,8 +75,8 @@ ex:
 ./qiime2_single.slurm PRJEB3232
 ```
 
+**qiime2_paired.slurm**
 ```
-qiime2_paired.slurm
 paired means forward and reverse
 
 How to run:
