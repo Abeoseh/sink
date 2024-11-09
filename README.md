@@ -50,7 +50,7 @@ Directory Structure:
 |
 ```
 
-All initial processing (fastq download and qiime taxonomic assignment) was done locally. Afterwards, files are processed on the cluster
+All initial fastq downloading was done locally. Afterwards, files were processed on the cluster.
 **download_sra.sh**
 ```
 `download_sra.sh` takes a SRR_Acc_List.txt and downloads all the fastq files for the given accessions. It automatically
