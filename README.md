@@ -1,4 +1,5 @@
 Directory Structure:
+
 ```
 .
 |___ README.md
@@ -8,53 +9,52 @@ Directory Structure:
 |___scripts
 |   |___download_sra.sh
 |   |___sra.log
-|	|___mk_manifest.sh
-|	|___qiime2.txt 
+|   |___qiime2_single.slurm
+|   |___qiime2_paired.slurm
 |
+|___csv_files
+|   |___combine
+|        |___`counts with taxonomy (4 total)`
 |
 |___PRJEB3232
 |   |___PRJEB3232_SraRunTable.txt
-|	|___manifest.tsv
 |   |___SRR_Acc_List.txt
 |   |___fastq
-|   |   |___**all fastq files
-|	|___qiime2_output
-|		|___*qiime2 output
+|   |   |___`**all fastq files`
+|   |___qiime2_output
+|       |___`**qimme2 and dada2 output except counts with taxonomy`
 |
 |___PRJEB3250
 |   |___PRJEB3250_SraRunTable.txt
 |   |___SRR_Acc_List.txt
 |   |___fastq
-|       |___**all fastq files
+|       |___`**all fastq files`
+|   |___qiime2_output
+|       |___`**qimme2 and dada2 output except counts with taxonomy`
 |
 |___PRJNA878661
 |   |___PRJNA878661_SraRunTable.txt
 |   |___SRR_Acc_List.txt
 |   |___fastq
-|       |___**all fastq files
+|       |___`**all fastq files`
+|   |___qiime2_output
+|       |___`**qimme2 and dada2 output except counts with taxonomy`
 |
 |___PRJNA834026
 |   |___PRJNA834026_SraRunTable.txt
 |   |___SRR_Acc_List.txt
 |   |___fastq
-|       |___**all fastq files
+|       |___`**all fastq files`
+|   |___qiime2_output
+|       |___`**qimme2 and dada2 output except counts with taxonomy`
+|
 ```
 
 All initial processing (fastq download and qiime taxonomic assignment) was done locally. Afterwards, files are processed on the cluster
 ```
-`download_sra.sh` 
+**`download_sra.sh` 
 `download_sra.sh` takes a SRR_Acc_List.txt and downloads all the fastq files for the given accessions. It automatically
 loop over the project IDs provided in as an array called "projects" within `download_sra.sh`.
-
-`mk_manifest.sh`
-`mk_manifest.sh` makes the maifest file in accordance with the qiime2 guidelines:
-https://docs.qiime2.org/2024.10/tutorials/importing/
-input: directory with fastq files (positional argument 1)
-output: a manifest file in the desired directory (positional argument 2)
-```
-
-```
-`qiime 2`
 
 How to run:
 - Change the projects in the array named "projects" to your desired project(s). 
@@ -62,6 +62,28 @@ How to run:
 - Open command prompt and navigate to the scripts folder.
 - Run the following command: `download_sra.sh > sra.log 2>&1` 
 - Output: a file in the scripts folder called sra.log which contains std error and std Output.
+```
+
+```
+qiime2_single.slurm
+single means only forward or reverse
+
+How to run:
+./qiime2_single.slurm folder_containing fastq folder
+
+ex:
+./qiime2_single.slurm PRJEB3232
+```
+
+```
+qiime2_paired.slurm
+paired means forward and reverse
+
+How to run:
+./qiime2_paired.slurm folder_containing fastq folder
+
+ex:
+./qiime2_paired.slurm PRJNA834026
 ```
 
 Processing Notes:
