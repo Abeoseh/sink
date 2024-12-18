@@ -4,7 +4,7 @@
 #SBATCH --nodes=4
 #SBATCH --ntasks-per-node=8
 #SBATCH --mem-per-cpu=20GB
-#SBATCH -o ../logs/qiime2/%a_single.out # STDOUT
+#SBATCH -o ../logs/qiime2/$1_single.out # STDOUT
 
 ## this file takes one positional argument: $1 which is the folder name containing the fastq folder and manifest file, it is assumed that the folder is the SRA project name
 
