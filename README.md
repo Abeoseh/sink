@@ -98,7 +98,7 @@ sbatch scripts/qiime2_paired.slurm PRJNA834026
 ```
 
 
-** ./scripts/combine_pt3.R **
+**./scripts/combine_pt3.R**
 ```
 $1 output folder name
 $2 first phenotype
@@ -111,7 +111,7 @@ sbatch combine_pt3.sbatch "associated" "skin associated" "floor associated" # re
 sbatch combine_pt3.sbatch "associated_na" "skin associated" "floor associated" "T" # results in NA staying as NA
 ```
 
-** ./run_all.sh **
+**./run_all.sh**
 ```
 $1 input folder (ensure it's located within ./csv_files)
 $2 output folder (ensure folder ./output is created)
