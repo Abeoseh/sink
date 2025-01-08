@@ -1,9 +1,9 @@
 #!/bin/bash 
-#SBATCH --partition=Nebula
+#SBATCH --partition=Orion
 #SBATCH --job-name=combine_pt3
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --time=1:00:00
+#SBATCH --time=10:00
 #SBATCH --mem-per-cpu=100000
 echo "======================================================"
 echo "Start Time : $(date)"
@@ -15,7 +15,7 @@ echo "" cd $SLURM_SUBMIT_DIR
 
 module load R
 
-Rscript ./scripts/combine_pt3.R &> logs/combine/combine_pt3.log
+Rscript ./scripts/combine_pt3.R "$1" "$2" "$3" $4 &> logs/combine/combine_pt3.log
 
 
 echo ""
