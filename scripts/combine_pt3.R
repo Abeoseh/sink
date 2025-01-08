@@ -1,25 +1,33 @@
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(tidyverse))
 
+args <- commandArgs(trailingOnly = TRUE)
+folder = args[1]
+pheno1 = args[2]
+pheno2 = args[3]
+NA_vals = args[4]
 `%ni%` <- Negate(`%in%`)
 
 #### open reference tables #####
 
 combine_otus <- read.csv("./csv_files/combine/combine_otus.csv", check.names=FALSE) 
 
-ontology <- read.csv("./csv_files/combine/common_ontology_2192.csv")
+ontology <- read.csv("./csv_files/common_ontology.csv")
 
-# assign NA as 0
+# assign NA as 0 if NA_vals is NOT provided 
+if(is.na(NA_vals)){
 combine_otus[is.na(combine_otus)] <- 0
+}
 
-ref.files <- list.files(pattern =".txt$", recursive = TRUE)
+ref.files <- list.files(".", "*_SraRunTable.txt", recursive = TRUE)
 
+print(ref.files)
 
 
 #### function 1-2: read the metadata files and removed undesired samples (rows) ####
 info <- function(ref.file_num, display_cols=NULL){
   ### read the metadata files ###
-  metadata <- read.csv(ref.files[ref.file_num], sep="\t", header=TRUE, colClasses = c("sample_name" = "character"))
+  metadata <- read.csv(ref.files[ref.file_num], sep = ",", header=TRUE) #, colClasses = c("sample_name" = "character"))
   
   if(!is.null(display_cols)){
     print("metadata columns:")
@@ -49,13 +57,13 @@ columns_to_filter <- function(df, columns, ref, condition){
 
 # file 11470:
 
-details_11740 <- info(2)
-combine_otus <- columns_to_filter(combine_otus, c("sample_name", "collection_timestamp"), details_11740, "2016-08-15 09:00")
-print("done all")
+#details_11740 <- info(2)
+#combine_otus <- columns_to_filter(combine_otus, c("sample_name", "collection_timestamp"), details_11740, "2016-08-15 09:00")
+#print("done all")
 
 # file 2192
-details_2192<- info(4)
-combine_otus <- columns_to_filter(combine_otus, c("sample_name", "day"), details_2192, "D02")
+#details_2192<- info(4)
+#combine_otus <- columns_to_filter(combine_otus, c("sample_name", "day"), details_2192, "D02")
 
 #### Step 1.5: (in combine_otus) switch rows and columns ####
 
@@ -77,17 +85,20 @@ unneeded_phenotypes <- function(ontology_df, current_ID, details_df, details_phe
 
 	# ontology_df is a dataframe with the following columns: 
 	### ID: contains all the Study_IDs
-	### surface: matches the samples names in details_phenotype
-	### common_name: the ontology between studies... all phenotypes that are unneeded are NA!! 
+	### surface: the original sample names ex bed rail, kitchen table, floor corner
+	### common_name: the ontology between studies (a.k.a chosen common names)... all phenotypes that are unneeded are NA!! 
 	
 	# current_ID is the Study ID of the current study
 	# details_df is the metadata file
 	# details_phenotype is the name of the phenotype column in details_df
 	# ontology is a vector with the desired ontology
 
-# details_df_and_unneeded_phenotypes <- unneeded_phenotypes(ontology, 10172, details_10172, "sample_type", c("skin_associated", "floor_associated"))
-
-
+	# example of how to run
+	### details_df_and_unneeded_phenotypes <- unneeded_phenotypes(ontology, 10172, details_10172, "sample_type", c("skin associated", "floor associated"))
+  print("ontology")
+  print(ontology)
+  
+	# current_ID <- deparse(substitute(current_ID))
 	current_ontology <- select(ontology_df, ID, surface, common_name) %>% filter(ID == current_ID & !(is.na(common_name))) 
 
 	# select the rows of current_ontology which have values labeled as your first ontology phenotype and...
@@ -95,7 +106,7 @@ unneeded_phenotypes <- function(ontology_df, current_ID, details_df, details_phe
 
 	# rename those columns in details_df as that ontology.
 	details_df[[details_phenotype]][details_df[[details_phenotype]] %in% pheno_1_associated] <- ontology[1]
-	
+
 	# Do the same for the second phenotype.
 	pheno_2_associated <- current_ontology$surface[current_ontology$common_name == ontology[2]]
 	details_df[[details_phenotype]][details_df[[details_phenotype]] %in% pheno_2_associated] <- ontology[2]
@@ -184,8 +195,9 @@ add_info_cols <- function(r, ref, col_names, study_ID, ref.df, undesirable = NUL
 
 #### files ####
 
-### 10172:
-details_10172 <- info(1)
+### 10172: ###
+details_10172 <- read.csv(ref.files[1], sep = "\t", header=TRUE, colClasses = c("sample_name" = "character"))
+
 print("count of each sample type in 10172: ")
 count(details_10172, sample_type) %>% print()
 
@@ -194,76 +206,80 @@ count = count(details_10172, sample_type)
 count$Study_ID = 10172
 
 
-details_df_and_unneeded_phenotypes <- unneeded_phenotypes(ontology, 10172, details_10172, "sample_type", c("skin", "floor"))
+details_df_and_unneeded_phenotypes <- unneeded_phenotypes(ontology, 10172, details_10172, "sample_type", c(pheno1, pheno2))
 
 
 current_ontology <- select(ontology, ID, surface, common_name) %>% filter(ID == 10172 & !(is.na(common_name))) 
 
 
 # k in phenotypes df must have the same name as the ontology df
-phenotypes <- data.frame(k = c("skin", "floor"),
+phenotypes <- data.frame(k = c(pheno1, pheno2),
                          Phenotype = c(1, 0))
 
 combine_otus <- add_info_cols(combine_otus, details_df_and_unneeded_phenotypes$df, c("sample_type", "sample_name"), 
 	10172, phenotypes, details_df_and_unneeded_phenotypes$vector)
 
 print("________________________________________________________")
-### 11740: ###
+### PRJEB3232: ###
 
-print("count of each sample type in 11740: ")
-count(details_11740, surface_sampledsample) %>% print()
+details_PRJEB3232 <- info(2)
+colnames(details_PRJEB3232)[1] = "sample_name"
+
+print("count of each sample type in PRJEB3232: ")
+count(details_PRJEB3232, genericdescription) %>% print()
 
 
-current_ontology <- select(ontology, ID, surface, common_name) %>% filter(ID == 11740 & !(is.na(common_name))) 
+# current_ontology <- select(ontology, ID, surface, common_name) %>% filter(ID == "PRJEB3232" & !(is.na(common_name))) 
 
-details_df_and_unneeded_phenotypes <- unneeded_phenotypes(ontology, 11740, details_11740, "surface_sampledsample", c("skin", "floor"))
+details_df_and_unneeded_phenotypes <- unneeded_phenotypes(ontology, "PRJEB3232", details_PRJEB3232 , "genericdescription", c(pheno1, pheno2))
 
 # k in phenotypes df must have the same name as the ontology df
-phenotypes  <- data.frame(k = c("skin", "floor"),
+phenotypes  <- data.frame(k = c(pheno1, pheno2),
                           Phenotype = c(1, 0))
 
 
-combine_otus <- add_info_cols(combine_otus, details_df_and_unneeded_phenotypes$df, c("surface_sampledsample", "sample_name"), 
-	11740, phenotypes, details_df_and_unneeded_phenotypes$vector)
+combine_otus <- add_info_cols(combine_otus, details_df_and_unneeded_phenotypes$df, c("genericdescription", "sample_name"), 
+	"PRJEB3232", phenotypes, details_df_and_unneeded_phenotypes$vector)
 
 print("________________________________________________________")
-### 12470: ###
-details_12470 <- info(3)
+### PRJEB3250: ###
+details_PRJEB3250 <- info(3)
+colnames(details_PRJEB3250)[1] = "sample_name"
 
-print("count of each sample type in 12470: ")
-count(details_12470, description) %>% print()
+print("count of each sample type in PRJEB3250: ")
+count(details_PRJEB3250, surface) %>% print()
 
 
-current_ontology <- select(ontology, ID, surface, common_name) %>% filter(ID == 12470 & !(is.na(common_name))) 
-
-details_df_and_unneeded_phenotypes <- unneeded_phenotypes(ontology, 12470, details_12470, "description", c("skin", "floor"))
+details_df_and_unneeded_phenotypes <- unneeded_phenotypes(ontology, "PRJEB3250", details_PRJEB3250, "surface", c(pheno1, pheno2))
 
 # k in phenotypes df must have the same name as the ontology df
-phenotypes  <- data.frame(k = c("skin", "floor"),
+phenotypes  <- data.frame(k = c(pheno1, pheno2),
                           Phenotype = c(1, 0))
 
-combine_otus <- add_info_cols(combine_otus, details_df_and_unneeded_phenotypes$df, c("description", "sample_name"), 
-	12470, phenotypes, details_df_and_unneeded_phenotypes$vector)
+combine_otus <- add_info_cols(combine_otus, details_df_and_unneeded_phenotypes$df, c("surface", "sample_name"), 
+	"PRJEB3250", phenotypes, details_df_and_unneeded_phenotypes$vector)
 
 
 
 print("________________________________________________________")
 
-# 2192:
-print("count of each sample type in 2192: ")
-# details_2192 is made above
-count(details_2192, subject_surface) %>% print()
+#### PRJNA878661: ####
+print("count of each sample type in PRJNA878661: ")
+details_PRJNA878661 <- info(4)
+colnames(details_PRJNA878661)[1] = "sample_name"
 
-current_ontology <- select(ontology, ID, surface, common_name) %>% filter(ID == 2192 & !(is.na(common_name))) 
+print("count of each sample type in PRJNA878661: ")
+count(details_PRJNA878661, sample_type) %>% print()
 
-details_df_and_unneeded_phenotypes <- unneeded_phenotypes(ontology, 2192, details_2192, "subject_surface", c("skin", "floor"))
+details_df_and_unneeded_phenotypes <- unneeded_phenotypes(ontology, "PRJNA878661", details_PRJNA878661, "sample_type", c(pheno1, pheno2))
 
 # k in phenotypes df must have the same name as the ontology df
-phenotypes  <- data.frame(k = c("skin", "floor"),
+phenotypes  <- data.frame(k = c(pheno1, pheno2),
                           Phenotype = c(1, 0))
+# print(details_df_and_unneeded_phenotypes$df)
 
-combine_otus <- add_info_cols(combine_otus, details_df_and_unneeded_phenotypes$df, c("subject_surface", "sample_name"), 
-	2192, phenotypes, details_df_and_unneeded_phenotypes$vector)
+combine_otus <- add_info_cols(combine_otus, details_df_and_unneeded_phenotypes$df, c("sample_type", "sample_name"), 
+	"PRJNA878661", phenotypes, details_df_and_unneeded_phenotypes$vector)
 
 print("________________________________________________________")
 
@@ -315,7 +331,7 @@ final_df <- final_df[,-c(filtered_indicies)]
 final_df <- final_df[apply(final_df[,-c(1:3)], 1, function(x) !all(x==0)),]
 
 
-write.csv(final_df, "./csv_files/combine/final_df.csv", row.names = FALSE)
+# write.csv(final_df, "./csv_files/combine/final_df.csv", row.names = FALSE)
 
 
 #### write output to file ####
@@ -328,26 +344,6 @@ lognorm <- function(table, dataframe, csv_file, filter = NULL, return_table = NU
   avg <- sum(rowSums(table, na.rm = T))/nrow(table)
   table <- sweep(table,1,rowSums(table, na.rm = T),"/")
   table <- log10(table*avg + 1)
-
-  #### filtering rare taxa #### all commented out since all the taxa kept being removed
-  #print("dim lognorm before filtering rare taxa")
-  #print(dim(table))
-  #
-  #percent = colSums(is.na(table))/nrow(table) # percent is a named number
-  #percent = percent[percent < 0.25] # gives the columns with an amount of NAs less than 25%
-  #
-  #table <- table %>% select(names(percent)) # select the columns with the amount of NAs less than 25%
-  #
-  #print("dim lognorm after filtering NA")
-  #print(dim(table))
-  #
-  #percent = colSums(table == 0, na.rm = T)#/nrow(table) # percent is a named number
-  #percent = percent[percent < 0.25] # gives the columns with an amount of NAs less than 25%
-  #write.csv(as.data.frame(percent), "./csv_files/test/percent.csv")
-  #table <- table %>% select(names(percent)) # select the columns with the amount of 0s less than 25%
-
-  #print("dim lognorm after filtering 0s")
-  #print(dim(table))
 
   # add sample_name, Study_ID, Phenotype back   
   table <- add_column(table, Study_ID=dataframe$Study_ID, .before = colnames(table)[1])
@@ -392,11 +388,12 @@ lognorm <- function(table, dataframe, csv_file, filter = NULL, return_table = NU
   }
   
   else(write.csv(table, csv_file, row.names = FALSE))
-  
+  print(dim(table))
   if(!is.null(return_table)){return(table)}
   
 
 }
 
-lognorm(final_df[4:length(final_df)], final_df, "./csv_files/skin_floor_na/lognorm_data.csv")
+lognorm(final_df[4:length(final_df)], final_df, paste("./csv_files/",folder,"/lognorm_data.csv",sep=""))
+
 print("script complete")

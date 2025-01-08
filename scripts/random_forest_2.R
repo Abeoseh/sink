@@ -13,9 +13,15 @@ suppressPackageStartupMessages(library(ggplot2))
 args <- commandArgs(trailingOnly = TRUE)
 file = args[1]
 permutations = as.numeric(args[2])
-ID_label = as.numeric(args[3])
+ID_label = args[3]
+folder = args[4]
+
+print(ID_label)
 
 DEBIAS_data <- read.csv(file, colClasses = c("Phenotype" = "factor"))
+
+
+
 
 DEBIAS_data %>% distinct(Phenotype) %>% print()
 
@@ -30,7 +36,7 @@ roc.df <- data.frame(matrix(ncol = 5, nrow = 0))
 colnames(roc.df) <- c("Study_ID", "DEBIAS", "Permutation", "sensitivities", "specificities")
 
 
-png(paste("./output/associated_2192/post_DEBIAS-M_RF_lognorm_ROC_", ID_label, ".png", sep=""))#, height = 24, width = 24)
+png(paste("./output/",folder,"/ROC_histograms/post_DEBIAS-M_RF_lognorm_ROC_", ID_label, ".png", sep=""))#, height = 24, width = 24)
 
 
 training <- filter(DEBIAS_data, Study_ID != ID_label)
@@ -45,7 +51,7 @@ RF_fit <- randomForest(Phenotype~., method = "class", data = training)
 set.seed(100)
 RF_pred <- predict(RF_fit, testing, type = "prob")
 
-## compute ROC      
+## compute ROC
 rf_roc <- roc(testing[,1], RF_pred[,1])
 
 ## add AUC from ROC to AUC df
@@ -62,7 +68,7 @@ phen <- filter(phenos, ID == ID_label)
 phen <- phen[1,2]
 title(paste("Training without: ", phen, sep=""), line = + 2.5, cex.main=1.5)
 
-## preform permutations     
+## preform permutations
 for(j in 1:permutations){
   ## permutate traing and testing labels
   set.seed(100)
@@ -70,13 +76,13 @@ for(j in 1:permutations){
   set.seed(100)
   testing$Phenotype <- sample(testing$Phenotype)
   set.seed(100)
-  
+
   ## do random forest
   set.seed(100)
   RF_fit <- randomForest(Phenotype~., method = "class", data = training)
   RF_pred <- predict(RF_fit, testing, type = "prob")
   rf_roc <- roc(testing[,1], RF_pred[,1])
-  
+
   p <- plot(rf_roc, print.auc=FALSE, add = TRUE)
   auc.df[nrow(auc.df) + 1,] = c(ID_label, auc(rf_roc), TRUE, TRUE)
 
@@ -87,25 +93,28 @@ for(j in 1:permutations){
   }
 p
 
-dev.off()  
+dev.off()
 
-png(paste("./output/associated_2192/post_DEBIAS-M_RF_lognorm_histogram_", ID_label, ".png", sep=""))
+# convert AUC in auc.df to numeric
+auc.df$AUC <- as.numeric(auc.df$AUC)
 
-a <- auc.df[auc.df$Permutation == 0,]$AUC
-samp <- auc.df[auc.df$Permutation == 1,]$AUC
-z = (a-mean(samp))/(sd(samp)/sqrt(1))
+png(paste("./output/",folder,"/ROC_histograms/post_DEBIAS-M_RF_lognorm_histogram_", ID_label, ".png", sep=""))
+
+a <- auc.df[auc.df$Permutation == FALSE,]$AUC
+samp <- auc.df[auc.df$Permutation == TRUE,]$AUC
+z = (a-mean(samp))/sd(samp) # 1 sample z-test
 for.pval = pnorm(z, lower.tail = FALSE)
 
 g <- ggplot() + geom_histogram(data = filter(auc.df, Permutation == TRUE), aes(x = AUC), bins = 40) +
   geom_vline(filter(auc.df, Permutation == FALSE), mapping = aes(xintercept=AUC), color = "cornflowerblue") +
   labs(title = paste("Training without: ", phen , sep=""), y = "count") +
   annotate("label", x=min(auc.df$AUC)+.01, y=5, size = 3, label = paste("p= ", signif(for.pval, digits=3), sep="")) +
-  scale_y_continuous(expand = expansion(mult = c(0, .1))) 
+  scale_y_continuous(expand = expansion(mult = c(0, .1)))
 
 
 print(g)
 
-dev.off()  
+dev.off()
 
 
 print(paste(ID_label, " done."))
@@ -113,12 +122,12 @@ print(paste(ID_label, " done."))
 #### Write to CSV files ####
 
 # AUCs
-AUC_filename <- "./csv_files/AUCs/associated_2192/builtenv_AUCs.csv"
-pval_filename <- "./csv_files/AUCs/associated_2192/builtenv_AUC_pvals.csv"
-ROC_filename <- "./csv_files/AUCs/associated_2192/builtenv_ROCs.csv"
+AUC_filename <- paste("./output/",folder,"/AUCs/builtenv_AUCs.csv",sep="")
+pval_filename <- paste("./output/",folder,"/AUCs/builtenv_AUC_pvals.csv",sep="")
+ROC_filename <- paste("./output/",folder,"/AUCs/builtenv_ROCs.csv",sep="")
 
-write.csv(auc.df, paste("./csv_files/AUCs/associated_2192/builtenv_post_DEBIAS_",ID_label,"_AUCs.csv",sep=""), row.names = FALSE)
-write.csv(roc.df, paste("./csv_files/AUCs/associated_2192/builtenv_pre_DEBIAS_",ID_label,"_ROCs.csv",sep=""), row.names = FALSE)
+write.csv(auc.df, paste("./output/",folder,"/AUCs/builtenv_post_DEBIAS_",ID_label,"_AUCs.csv",sep=""), row.names = FALSE)
+write.csv(auc.df, paste("./output/",folder,"/AUCs/builtenv_post_DEBIAS_",ID_label,"_ROCs.csv",sep=""), row.names = FALSE)
 
 ## AUC
 if(file.exists(AUC_filename)){
@@ -138,9 +147,7 @@ if(file.exists(ROC_filename)){
 
 
 ## pvals
-pval.df <- data.frame(matrix(ncol = 3, nrow = 0))
-colnames(pval.df) = c("Study_ID", "pval", "DEBIAS")
-pval.df[nrow(pval.df) + 1,] = c(ID_label, for.pval, TRUE)
+pval.df <- data.frame(Study_ID = ID_label, pval = for.pval, DEBIAS = TRUE)
 
 if(file.exists(pval_filename)){
   all <- read.csv(pval_filename)
