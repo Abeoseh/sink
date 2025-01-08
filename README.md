@@ -9,6 +9,7 @@ Directory Structure:
 |___scripts
 |   |___download_sra.sh
 |   |___sra.log
+|	|___mk_manifest.sh
 |   |___qiime2_single.slurm
 |   |___qiime2_paired.slurm
 |
@@ -64,15 +65,25 @@ How to run:
 - Output: a file in the scripts folder called sra.log which contains std error and std Output.
 ```
 
+**mk_manifest.sh**
+```
+How to run:
+./scripts/mk_manifest.sh fastq_folder
+
+ex:
+./scripts/mk_manifest.sh ./PRJEB3232/fastq
+```
+
 **qiime2_single.slurm**
 ```
 single means only forward or reverse
+ensure folders: qiime2_output and ./
 
 How to run:
-./qiime2_single.slurm folder_containing fastq folder
+sbatch scripts/qiime2_single.slurm folder_containing_fastq_folder
 
 ex:
-./qiime2_single.slurm PRJEB3232
+sbatch scripts/qiime2_single.slurm PRJEB3232
 ```
 
 **qiime2_paired.slurm**
@@ -80,15 +91,39 @@ ex:
 paired means forward and reverse
 
 How to run:
-./qiime2_paired.slurm folder_containing fastq folder
+sbatch scripts/qiime2_paired.slurm folder_containing fastq folder
 
 ex:
-./qiime2_paired.slurm PRJNA834026
+sbatch scripts/qiime2_paired.slurm PRJNA834026
 ```
+
+
+** ./scripts/combine_pt3.R **
+```
+$1 output folder name
+$2 first phenotype
+$3 second phenotype
+$4 (""/T) keep NA as NA
+./scripts/combine_pt3.R $1 $2 $3 $4
+
+ex:
+sbatch combine_pt3.sbatch "associated" "skin associated" "floor associated" # results in NA values being coded as 0
+sbatch combine_pt3.sbatch "associated_na" "skin associated" "floor associated" "T" # results in NA staying as NA
+```
+
+** ./run_all.sh **
+```
+$1 input folder (ensure it's located within ./csv_files)
+$2 output folder (ensure folder ./output is created)
+$3 amount of studies
+./run_all.sh $1 $2 $3
+```
+ex:
+./run_all.sh sink_nonsink sink_nonsink 4
 
 Processing Notes:
 - PRJEB3232 and PRJEB3250: only have one read per spot.
-
+- PRJNA834026 had no taxonomy assigned and was dropped.
 
 
  ### provide accessions:
